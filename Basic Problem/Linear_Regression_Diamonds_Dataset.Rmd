@@ -1,0 +1,486 @@
+---
+title: "Linaear Regression on Diamonds Dataset"
+output: html_notebook
+---
+
+```{r}
+require(ggplot2)
+View(diamonds)
+?diamonds
+```
+
+```{r}
+diamond_df <- as.data.frame(diamonds)
+str(diamond_df)
+
+```
+
+
+
+```{r}
+# Fixing factor columns
+require(dplyr)
+diamond_df <- mutate_if(diamond_df, is.factor, as.character)
+str(diamond_df)
+```
+
+
+
+```{r}
+#Fixing case mismatch
+diamond_df <- mutate_if(diamond_df, is.character, tolower)
+
+head(diamond_df)
+```
+
+```{r}
+# Missing values check
+sum(is.na(diamond_df))
+
+```
+
+```{r}
+# checking and removing all the duplicated rows
+sum(duplicated(diamond_df))
+
+diamond_df <- distinct(diamond_df)
+```
+
+
+
+Univariate Analysis begins
+
+```{r}
+
+summary(diamond_df$carat)
+
+```
+
+
+
+
+```{r}
+hist(diamond_df$carat)
+
+boxplot(diamond_df$carat)
+
+```
+
+
+
+
+```{r}
+
+quantile(diamond_df$carat, seq(0, 1, by = 0.01))
+
+
+
+
+```
+
+
+```{r}
+
+plot( quantile( diamond_df$carat , seq(0, 1, by = 0.01) ) )
+
+```
+
+
+
+```{r}
+
+diamond_df$carat[which(diamond_df$carat > 2.18)] <- 2.18
+
+plot(quantile(diamond_df$carat, seq(0, 1, by = 0.01)))
+
+```
+
+
+
+
+```{r}
+
+summary(diamond_df$carat)
+
+```
+
+
+ Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.2000  0.4000  0.7000  0.7978  1.0400  5.0100 
+
+
+
+
+```{r}
+table(diamond_df$cut)
+
+```
+
+
+
+```{r}
+
+cut_gp <- group_by(diamond_df, cut) %>% summarise(avg_price = mean(price), mid_price = median(price))
+
+cut_gp
+
+```
+
+
+
+
+
+```{r}
+
+ggplot(cut_gp, aes(x = cut, y = avg_price)) + geom_col(color = 'blue', fill = 'skyblue') 
+
+```
+
+
+
+
+```{r}
+table(diamond_df$color)
+
+```
+
+
+
+
+
+```{r}
+table(diamond_df$clarity)
+
+```
+
+
+
+
+```{r}
+#depth
+
+plot(quantile(diamond_df$depth ,seq(0,1,by = 0.01)))
+quantile(diamond_df$depth ,seq(0,1,by = 0.01))
+
+diamond_df$depth[diamond_df$depth > 65.6] = 65.6
+
+diamond_df$depth[diamond_df$depth < 57.9] = 57.9
+
+```
+
+
+
+```{r}
+#table
+quantile(diamond_df$table , seq(0,1,0.01))
+
+plot(quantile(diamond_df$table , seq(0,1,0.01)))
+
+diamond_df$table[diamond_df$table < 53.0] = 53.0
+
+diamond_df$table[diamond_df$table > 64.0] = 64.0
+
+```
+
+
+```{r}
+#price
+
+quantile(diamond_df$price , seq(0,1,0.01))
+
+plot(quantile(diamond_df$price , seq(0,1,0.01)))
+
+```
+
+
+
+```{r}
+summary(diamond_df$price)
+
+boxplot(diamond_df$price)
+
+
+```
+
+
+
+
+```{r}
+
+quantile(diamond_df$price , seq(0,1,0.01))
+
+plot(quantile(diamond_df$price , seq(0,1,0.01)))
+
+```
+
+
+
+```{r}
+#x
+quantile(diamond_df$x , seq(0,1,0.01))
+plot(quantile(diamond_df$x , seq(0,1,0.01)))
+
+diamond_df$x[diamond_df$x < 4.0200]= 4.0200
+diamond_df$x[diamond_df$x > 8.3500]= 8.3500
+
+```
+
+
+```{r}
+#y
+
+quantile(diamond_df$y , seq(0,1,0.01))
+plot(quantile(diamond_df$y , seq(0,1,0.01)))
+
+diamond_df$y[diamond_df$y < 4.0400]= 4.0400
+diamond_df$y[diamond_df$y > 8.3300]= 8.3300
+
+```
+
+
+```{r}
+#z
+
+quantile(diamond_df$z , seq(0,1,0.01))
+plot(quantile(diamond_df$z , seq(0,1,0.01)))
+
+diamond_df$z[diamond_df$z < 2.48]= 2.48
+diamond_df$z[diamond_df$z > 5.15]= 5.15
+
+```
+
+
+```{r}
+summary(diamond_df)
+```
+
+
+
+
+```{r}
+require(dummies)
+
+final_data <- dummy.data.frame(diamond_df)
+
+```
+
+
+
+```{r}
+View(final_data)
+```
+
+
+
+
+```{r}
+
+cor_mat <- round( cor(final_data), 2 )
+
+cor_mat
+```
+
+
+
+
+
+```{r}
+
+require(corrplot)
+
+corrplot(cor_mat, method = 'color', type = 'upper')
+
+View(cor_mat)
+```
+
+
+
+
+```{r}
+sample(10, 7)
+```
+
+
+
+```{r}
+
+set.seed(111)
+
+i <- sample(nrow(final_data), 0.75 * nrow(final_data))
+
+trn_df <- final_data[ i , ]
+
+val_df <- final_data[ -i, ]
+
+```
+
+
+
+
+```{r}
+
+lrm_1 <- lm(price ~ ., data = trn_df )
+
+summary(lrm_1)
+
+```
+
+
+
+
+
+
+```{r}
+
+lrm_2 <- step(lrm_1)
+
+```
+
+
+
+
+```{r}
+summary(lrm_2)
+
+```
+
+
+
+
+VARIANCE INFLATION FACTOR
+
+```{r}
+
+require(car)
+
+sort(vif(lrm_2))
+
+```
+
+
+
+VIF <= 2    IDEAL / BEST
+
+VIF <= 5    ACCPECTED
+
+VIF <=10    CONCERN AREA
+
+VIF > 10    TREATMENT IS A MANDATE
+
+
+
+
+```{r}
+
+# Removing y
+
+lrm_3 <- lm(formula = price ~ carat + cutfair + cutgood + cutideal + cutpremium + 
+            colord + colore + colorf + colorg + colorh + colori + clarityi1 + 
+            clarityif + claritysi1 + claritysi2 + clarityvs1 + clarityvs2 + 
+            depth + table + x + z, data = trn_df)
+
+summary(lrm_3)
+
+```
+
+
+
+
+
+```{r}
+
+sort(vif(lrm_3))
+
+```
+
+
+
+Removing z
+
+```{r}
+
+lrm_4 <- lm(formula = price ~ carat + cutfair + cutgood + cutideal + cutpremium + 
+            colord + colore + colorf + colorg + colorh + colori + clarityi1 + 
+            clarityif + claritysi1 + claritysi2 + clarityvs1 + clarityvs2 + 
+            depth + table + x, data = trn_df)
+
+summary(lrm_4)
+
+```
+
+
+```{r}
+
+sort(vif(lrm_4))
+
+```
+
+
+
+```{r}
+
+lrm_5 <- lm(formula = price ~ carat + cutfair + cutgood + cutideal + cutpremium + 
+    colord + colore + colorf + colorg + colorh + colori + clarityi1 + 
+    clarityif + claritysi1 + claritysi2 + clarityvs1 + clarityvs2 + 
+    depth + table, data = trn_df)
+
+summary(lrm_5)
+
+```
+
+
+```{r}
+
+sort(vif(lrm_5))
+
+```
+
+
+
+
+
+```{r}
+
+val_df$pred_price <- predict(lrm_5, newdata = val_df)
+
+View(val_df)
+
+```
+
+
+
+
+```{r}
+
+require(forecast)
+
+accuracy(val_df$pred_price , val_df$price)
+
+```
+
+
+
+
+
+
+Rsq. = Coeff. of determination
+
+R    = Coeff. of correlation
+
+```{r}
+
+Rsq_val <- cor(val_df$pred_price , val_df$price)^2
+
+Rsq_val
+
+```
+
+
+
+
+**********************************************************
+
+
+
+
+
